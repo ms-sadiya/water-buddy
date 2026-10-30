@@ -32,9 +32,15 @@ export const CHARACTER_ASSETS = Object.freeze({
 
 /**
  * Set of character assets physically present in public/character/.
- * Currently, only idle.png is implemented as the master asset.
+ * All 4 official character assets are present with transparent backgrounds:
+ * - idle.png (master)
+ * - happy.png (celebration on Yes)
+ * - gentle.png (comfort / encouragement on Not yet)
+ * - waving.png (friendly greeting on reminder appearance)
  */
-export const AVAILABLE_CHARACTER_ASSETS = Object.freeze(new Set(['idle']));
+export const AVAILABLE_CHARACTER_ASSETS = Object.freeze(
+  new Set(['idle', 'happy', 'gentle', 'waving'])
+);
 
 /**
  * Resolves the appropriate asset path for a given character state.
@@ -67,3 +73,4 @@ export function getCharacterAssetInventory() {
     isAvailable: AVAILABLE_CHARACTER_ASSETS.has(state),
   }));
 }
+

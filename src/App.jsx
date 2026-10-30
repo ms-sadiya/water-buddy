@@ -1,11 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import WaterBuddy from './components/WaterBuddy/WaterBuddy.jsx';
 
 export default function App() {
   const [uiState, setUiState] = useState('reminding'); // 'hidden' | 'reminding' | 'confirmed' | 'snoozed'
   const [message, setMessage] = useState("Hey! It's time to drink water! 💧");
-  const [characterMood, setCharacterMood] = useState('idle'); // 'idle' | 'happy' | 'gentle'
+  const [characterMood, setCharacterMood] = useState('waving'); // 'idle' | 'happy' | 'gentle' | 'waving'
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Timer ref to cleanly manage the waving -> idle greeting transition without leaks or stale timers
+  const wavingTimerRef = useRef(null);
+
+  /**
+   * Helper to trigger a brief waving greeting when a reminder appears,
+   * transitioning smoothly to idle after 1.8s while buttons remain interactive.
+   */
+  const startWavingGreeting = () => {
+    if (wavingTimerRef.current) {
+      clearTimeout(wavingTimerRef.current);
+    }
+    setCharacterMood('waving');
+    wavingTimerRef.current = setTimeout(() => {
+      setCharacterMood('idle');
+      wavingTimerRef.current = null;
+    }, 1800);
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -20,7 +38,7 @@ export default function App() {
             setUiState('reminding');
             setMessage(stateData.messages?.prompt || "Hey! It's time to drink water! 💧");
             setIsProcessing(false);
-            setCharacterMood('idle');
+            startWavingGreeting();
           } else if (stateData.state === 'confirmed') {
             setUiState('confirmed');
             setMessage(stateData.messages?.confirmed || "Awesome! Stay hydrated! 💧✨");
@@ -44,7 +62,7 @@ export default function App() {
       setUiState('reminding');
       setMessage(data?.message || "Hey! It's time to drink water! 💧");
       setIsProcessing(false);
-      setCharacterMood('idle');
+      startWavingGreeting();
     });
 
     // Subscribe to manual show events from system tray
@@ -54,15 +72,18 @@ export default function App() {
         setUiState('reminding');
         setMessage(data.message || "Hey! It's time to drink water! 💧");
         setIsProcessing(false);
-        setCharacterMood('idle');
+        startWavingGreeting();
       } else {
         setMessage(data?.message || "Water Buddy is active & keeping you hydrated! 💧");
-        setCharacterMood('waving');
+        startWavingGreeting();
       }
     });
 
     return () => {
       isMounted = false;
+      if (wavingTimerRef.current) {
+        clearTimeout(wavingTimerRef.current);
+      }
       if (typeof unsubReminder === 'function') unsubReminder();
       if (typeof unsubManual === 'function') unsubManual();
     };
@@ -70,6 +91,11 @@ export default function App() {
 
   const handleYes = async () => {
     if (isProcessing) return;
+
+    if (wavingTimerRef.current) {
+      clearTimeout(wavingTimerRef.current);
+      wavingTimerRef.current = null;
+    }
 
     // Immediately update UI to provide instant feedback and prevent duplicate clicks
     setIsProcessing(true);
@@ -92,6 +118,11 @@ export default function App() {
 
   const handleNotYet = async () => {
     if (isProcessing) return;
+
+    if (wavingTimerRef.current) {
+      clearTimeout(wavingTimerRef.current);
+      wavingTimerRef.current = null;
+    }
 
     // Immediately update UI to provide instant feedback and prevent duplicate clicks
     setIsProcessing(true);

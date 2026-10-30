@@ -25,10 +25,11 @@ export default function WaterBuddy({ state = 'idle', className = '', onClick }) 
     setImageSrc(getCharacterAsset(state));
   }, [state]);
 
-  // Robust runtime fallback: if an asset fails to load, gracefully fall back to master idle
+  // Robust runtime fallback: if an asset fails to load (e.g. gentle.png or waving.png missing),
+  // gracefully fall back to master idle.png without broken image icons.
   const handleImageError = () => {
     if (imageSrc !== MASTER_CHARACTER_ASSET) {
-      console.warn(`[WaterBuddy] Failed to load character asset for "${state}", falling back to master idle.`);
+      console.warn(`[WaterBuddy] Failed to load character asset "${imageSrc}" for state "${state}", falling back to master idle.`);
       setImageSrc(MASTER_CHARACTER_ASSET);
     }
   };
